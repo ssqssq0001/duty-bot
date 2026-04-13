@@ -1,0 +1,72 @@
+name: 每日值班提醒机器人
+
+on:
+  schedule:
+    - cron: '0 4 * * *'  # 北京时间 12:00 执行（UTC 4:00）
+  workflow_dispatch:     # 允许手动测试运行
+
+jobs:
+  send-duty:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 今日值班推送
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: '${{ secrets.WEBHOOK_URL }}'
+          method: 'POST'
+          contentType: 'application/json'
+          data: |
+            {
+              "msgtype": "text",
+              "text": {
+                "content": "${{ env.DUTY_MESSAGE }}"
+              },
+              "mentioned_list": ["${{ env.MENTION_USER }}"]
+            }
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          # 今天北京时间
+          TODAY: $(date -d '+8 hours' +%Y-%m-%d)
+          # 排班表（已帮你录入4月排班）
+          DUTY_TABLE: |
+            2025-04-01:顾余晨
+            2025-04-02:林卓怡
+            2025-04-03:刘月溪
+            2025-04-06:假期
+            2025-04-07:白镁慧
+            2025-04-08:郦莜扬
+            2025-04-09:王芷慧
+            2025-04-10:孙嗣琦
+            2025-04-13:归燕婷
+            2025-04-14:邵方
+            2025-04-15:顾余晨
+            2025-04-16:林卓怡
+            2025-04-17:刘月溪
+            2025-04-20:白镁慧
+            2025-04-21:郦莜扬
+            2025-04-22:王芷慧
+            2025-04-23:孙嗣琦
+            2025-04-24:归燕婷
+            2025-04-27:邵方
+            2025-04-28:顾余晨
+            2025-04-29:林卓怡
+            2025-04-30:刘月溪
+
+      - name: 匹配今日值班人
+        run: |
+          # 获取今天日期
+          TODAY=$(date -d '+8 hours' +%Y-%m-%d)
+          # 匹配值班人
+          DUTY_USER=$(echo "${{ env.DUTY_TABLE }}" | grep "$TODAY:" | cut -d':' -f2)
+
+          # 设置消息内容
+          if [ -z "$DUTY_USER" ]; then
+            echo "DUTY_MESSAGE=今日无排班" >> $GITHUB_ENV
+            echo "MENTION_USER=" >> $GITHUB_ENV
+          elif [ "$DUTY_USER" = "假期" ]; then
+            echo "DUTY_MESSAGE=今日假期，无需值班" >> $GITHUB_ENV
+            echo "MENTION_USER=" >> $GITHUB_ENV
+          else
+            echo "DUTY_MESSAGE=今日值班 @$DUTY_USER" >> $GITHUB_ENV
+            echo "MENTION_USER=$DUTY_USER" >> $GITHUB_ENV
+          fi
