@@ -2,57 +2,25 @@ name: 每日值班提醒机器人
 
 on:
   schedule:
-    - cron: '0 4 * * *'  # 北京时间 12:00
-  workflow_dispatch:
+    - cron: '0 4 * * *'  # 每天 北京时间 12:00 运行
+  workflow_dispatch:    # 允许手动点击运行
 
 jobs:
   send-duty:
     runs-on: ubuntu-latest
     steps:
-      - name: 计算今日值班人
-        id: get-duty
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安装依赖
         run: |
-          TODAY=$(date -d '+8 hours' +%Y-%m-%d)
-          echo "TODAY=$TODAY" >> $GITHUB_ENV
+          python -m pip install --upgrade pip
+          pip install requests
 
-          DUTY_MAP="
-          4 月 1 日（周三）：顾余晨
-          4 月 2 日（周四）：林卓怡
-          4 月 3 日（周五）：刘月溪
-          4 月 6 日（周一）：假期
-          4 月 7 日（周二）：白镁慧
-          4 月 8 日（周三）：郦莜扬
-          4 月 9 日（周四）：王芷慧
-          4 月 10 日（周五）：孙嗣琦
-          4 月 13 日（周一）：归燕婷
-          4 月 14 日（周二）：邵方
-          4 月 15 日（周三）：顾余晨
-          4 月 16 日（周四）：林卓怡
-          4 月 17 日（周五）：刘月溪
-          4 月 20 日（周一）：白镁慧
-          4 月 21 日（周二）：郦莜扬
-          4 月 22 日（周三）：王芷慧
-          4 月 23 日（周四）：孙嗣琦
-          4 月 24 日（周五）：归燕婷
-          4 月 27 日（周一）：邵方
-          4 月 28 日（周二）：顾余晨
-          4 月 29 日（周三）：林卓怡
-          4 月 30 日（周四）：刘月溪
-          "
-
-          DUTY_PERSON=$(echo "$DUTY_MAP" | grep "$TODAY" | cut -d: -f2)
-          echo "DUTY_PERSON=$DUTY_PERSON" >> $GITHUB_ENV
-          echo "DUTY_MESSAGE=今日值班提醒：$DUTY_PERSON 今天值班~" >> $GITHUB_ENV
-
-      # 👇 这是 GitHub 官方原生方式，无任何第三方库，0警告
-      - name: 发送企业微信消息
-        run: |
-          curl -X POST ${{ secrets.WEBHOOK_URL }} \
-          -H "Content-Type: application/json" \
-          -d '{
-            "msgtype": "text",
-            "text": {
-              "content": "${{ env.DUTY_MESSAGE }}"
-            },
-            "mentioned_list": ["@all"]
-          }'
+      - name: 执行值班脚本
+        run: python duty.py
