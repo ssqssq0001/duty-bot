@@ -3,7 +3,7 @@ import csv
 from datetime import datetime, timedelta
 
 # ====================== 只改这里 ======================
-WEBHOOK_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=你的机器人KEY"
+WEBHOOK_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=792b09d9-335a-4fc6-bb63-6f963ea72ded"
 # ======================================================
 
 # 从 duty.csv 读取（A列日期，B列姓名）
