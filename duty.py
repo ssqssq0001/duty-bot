@@ -35,7 +35,7 @@ if name in ["假期", "暂无排班"]:
     mentioned_list = []
 else:
     content = f"📢 今日值班：@{name}"
-    mentioned_list = [name]  # 企业微信建议用 userid，中文名可能@无效
+    mentioned_list = [name]
 
 # 发送消息
 payload = {
@@ -48,9 +48,20 @@ payload = {
 
 try:
     resp = requests.post(WEBHOOK_URL, json=payload)
+    result = resp.json()
+
+    # =============== 自动输出 UserID 核心代码 ===============
     print("✅ 运行成功")
     print(f"📅 今日日期：{today_slash}")
-    print(f"👤 值班人员：{name}")
-    print(f"📩 微信返回：{resp.json()}")
+    print(f"👤 值班姓名：{name}")
+    print(f"🔍 微信返回完整结果：{result}")
+
+    # 这里会直接打印出 【值班人真实 UserID】
+    if "mentioned_list" in result:
+        print(f"\n🎉 【重要】当前值班人 UserID：{result['mentioned_list']}")
+    if "invaliduser" in result:
+        print(f"\n⚠️ 无效用户名：{result['invaliduser']}")
+    # ======================================================
+
 except Exception as e:
     print(f"❌ 发送失败：{str(e)}")
