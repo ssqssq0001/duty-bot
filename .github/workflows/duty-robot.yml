@@ -2,17 +2,19 @@ name: 每日值班提醒机器人
 
 on:
   schedule:
-    - cron: '0 4 * * *'  # 每天 北京时间 12:00 运行
-  workflow_dispatch:    # 允许手动点击运行
+    - cron: '0 4 * * *'  # 北京时间 12:00
+  workflow_dispatch:
 
 jobs:
   send-duty:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true  # 彻底消除Node警告
     steps:
       - name: 拉取代码
         uses: actions/checkout@v4
 
-      - name: 安装 Python
+      - name: 设置Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -22,5 +24,5 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
-      - name: 执行值班脚本
+      - name: 运行脚本
         run: python duty.py
