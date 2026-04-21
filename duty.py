@@ -10,8 +10,8 @@ WEBHOOK_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=792b09d9-335
 def load_duty_table():
     duty_map = {}
     try:
-        with open("duty.csv", "r", encoding="utf-8") as f:
-            reader = csv.reader(f, delimiter="\t")
+        with open("duty.csv", "r", encoding="utf-8") as f:            
+            reader = csv.reader(f, delimiter=",")
             for row in reader:
                 if len(row) >= 2:
                     date = row[0].strip()
@@ -25,10 +25,10 @@ duty_map = load_duty_table()
 
 # 北京时间
 beijing_time = datetime.utcnow() + timedelta(hours=8)
-today_slash = beijing_time.strftime("%Y/%m/%d").replace("/0", "/")  # 2026/4/10
-today_dash = beijing_time.strftime("%Y-%m-%d")
+today_str = beijing_time.strftime("%Y/%-m/%-d")  # 2026/4/21（Linux/GitHub可用）
 
-name = duty_map.get(today_slash, duty_map.get(today_dash, "暂无排班"))
+print(f"📅 今天日期(匹配用)：{today_str}")
+name = duty_map.get(today_str, "暂无排班")
 
 # 构造消息
 if name in ["假期", "暂无排班"]:
@@ -46,15 +46,12 @@ payload = {
     }
 }
 
-# 发送（增加超时 + 完整捕获异常）
+# 发送
 try:
     resp = requests.post(WEBHOOK_URL, json=payload, timeout=10)
     result = resp.json()
     print("✅ 推送成功")
-    print(f"📅 日期：{today_slash}")
     print(f"👤 值班人：{name}")
     print(f"📩 微信返回：{result}")
-    if "mentioned_list" in result:
-        print(f"🎉 UserID：{result['mentioned_list']}")
 except Exception as e:
     print(f"❌ 发送失败：{str(e)}")
